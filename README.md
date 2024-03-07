@@ -17,4 +17,4 @@ Python script using object-oriented code to visualize motifs on sequences
   * motifs file (text)
 * output:
   * png (visualization of the features)
-  * single_line.fasta (this is a fasta file that is generated and utilized in the python script. Each record is two lines (header/seq))
+  * single_line.fasta (this is a fasta file that is generated and utilized in the python script. Each record is two lines (header and seq))
