@@ -1,5 +1,8 @@
 # motif-mark
 
+### Command To Run:
+./motif-mark-oop.py -f `fasta`  -m `motifs` 
+
 ### Versions: 
 * cairo: 1.18.0
 * pycairo: 1.26.0 
