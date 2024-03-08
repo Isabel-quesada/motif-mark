@@ -13,21 +13,33 @@ def get_args():
     parser.add_argument("-m", "--motifs", help="designates absolute file path to motifs file", type=str, required=True)
     return parser.parse_args()
 
-
-
 args = get_args()
 input_fasta = args.fasta
 input_motifs = args.motifs
 
-prefix = vars(args)['fasta'].split('.')[0] #only works if input files are in the same directory as this script
+
+# Getting the prefix of the input fasta file to use when generating the ouput png. This accounts for absolute paths as input and 
+# also for when the input files are in the working directory.
+filepath = vars(args)['fasta'] 
+file_name = "" # variable to hold the prefix of the input fasta file
+
+if filepath.startswith('/'): # absolute path was given for input fasta file
+    prefix = filepath.split('/')
+    prefix.reverse()
+    file_name = prefix[0].split('.')[0]
+else: 
+    # input files are in the same directory as motif-mark-oop.py
+    file_name = filepath.split('.')[0]
+
 
 class Locate: 
-    '''Locate the features: motifs, exon, intron'''
+    '''Locate the features: motifs, exon, intron, gene name'''
     def __init__(self):
         self.feature = None
 
     ## Methods ##
-    def find_motif(self,data,regex_motifs,prefix): 
+    def find_motif(self,data,regex_motifs,file_name): 
+        '''Find all instances of input motifs in each sequence. Assign each unique motif a random (r,g,b) color.'''
         pos_motif = 200
         for seq in data.values(): 
             sequence = seq.upper()
@@ -46,36 +58,38 @@ class Locate:
                         if i not in colors.keys(): 
                             random_color = figure.generate_random_color(colors)
                             colors[i]=random_color
-                            figure.motif(start,end,pos_motif,colors[i][0],colors[i][1],colors[i][2],prefix)
+                            figure.motif(start,end,pos_motif,colors[i][0],colors[i][1],colors[i][2],file_name)
                         else: 
-                            figure.motif(start,end,pos_motif,colors[i][0],colors[i][1],colors[i][2],prefix)
+                            figure.motif(start,end,pos_motif,colors[i][0],colors[i][1],colors[i][2],file_name)
             pos_motif += 150
 
-    def find_intron(self,data,prefix):
+    def find_intron(self,data,file_name):
+        '''Determine the length of the sequence'''
         pos = 200
         for key in data: 
             length = len(data[key]) + 50
-            # print(f'The sequence length is {length}')
-            figure.intron(length, pos,prefix)
+            figure.intron(length, pos,file_name)
             pos += 150
     
-    def find_exon(self,data,prefix): 
+    def find_exon(self,data,file_name): 
+        '''Find the exon/exons present in the sequence'''
         pos_exon = 200
         for seq in data.values(): 
             matches = [(m.start(0), m.end(0)) for m in re.finditer('[A-Z+]+', seq)]
             start = matches[0][0] + 50
             end = matches[0][1] + 50
-            figure.exon(start, end, pos_exon,prefix)
+            figure.exon(start, end, pos_exon,file_name)
             pos_exon += 150
 
-    def gene_name(self,data,prefix):
+    def gene_name(self,data,file_name):
+        '''Get the gene name for each sequence'''
         pos_gene = 150
         for key in data: 
-            figure.gene_name(key,pos_gene,prefix)
+            figure.gene_name(key,pos_gene,file_name)
             pos_gene += 150
 
 class Draw: 
-    '''Draw the features: motifs, intron, exon'''
+    '''Draw the features: gene name, legend, motifs, intron, exon'''
     surface = cairo.ImageSurface(cairo.FORMAT_RGB24, 1500, 3000)
     context = cairo.Context(surface)
     context.set_source_rgb(1,1,1)
@@ -86,6 +100,7 @@ class Draw:
 
     ## METHODS ##
     def generate_random_color(self,colors): 
+        '''Generates random (r,g,b) to be used as the motif colors. Ensures the same color is not used for different motifs.'''
         while True: 
             r = round(random.random(), 2) 
             g = round(random.random(), 2)
@@ -93,16 +108,18 @@ class Draw:
             if (r,g,b) not in colors.values():
                 return (r,g,b)
     
-    def gene_name(self,gene,pos_gene,prefix):
+    def gene_name(self,gene,pos_gene,file_name):
+        '''Add gene name for each sequence to the figure'''
         self.context.set_source_rgb(0,0,0)
         self.context.set_font_size(20)
         self.context.select_font_face("Arial", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
         self.context.move_to(50,pos_gene)
         self.context.show_text(f'Gene {gene}')
         self.context.stroke()
-        self.surface.write_to_png(f'{prefix}.png')
+        self.surface.write_to_png(f'{file_name}.png')
 
-    def legend(self,colors,prefix,x=10,y=10,width=20,height=10,spacing=10,font_size=12): 
+    def legend(self,colors,file_name,x=10,y=10,width=20,height=10,spacing=10,font_size=12): 
+        '''Add a legend to show the color of each motif'''
         self.context.set_font_size(font_size)
         for motif, color in colors.items():
             r = color[0]
@@ -116,31 +133,34 @@ class Draw:
             self.context.select_font_face("Arial", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
             self.context.show_text(motif)
             y+= height+spacing
-            self.surface.write_to_png(f'{prefix}.png')
+            self.surface.write_to_png(f'{file_name}.png')
         
-    def motif(self,start,end,pos_motif,r,g,b,prefix): 
+    def motif(self,start,end,pos_motif,r,g,b,file_name): 
+        '''Draws motif to scale'''
         self.context.set_source_rgb(r,g,b)
         self.context.set_line_width(45)
         self.context.move_to(start,pos_motif)
         self.context.line_to(end,pos_motif)
         self.context.stroke()
-        self.surface.write_to_png (f'{prefix}.png')
+        self.surface.write_to_png (f'{file_name}.png')
 
-    def intron(self,length,pos,prefix): 
+    def intron(self,length,pos,file_name): 
+        '''Draws intron to scale'''
         self.context.set_source_rgb(0,0,0)
         self.context.set_line_width(3)
         self.context.move_to(50,pos)
         self.context.line_to(length,pos)
         self.context.stroke()
-        self.surface.write_to_png (f'{prefix}.png')
+        self.surface.write_to_png (f'{file_name}.png')
 
-    def exon(self,start,end,pos_exon,prefix): 
+    def exon(self,start,end,pos_exon,file_name): 
+        '''Draws exon to scale'''
         self.context.set_source_rgb(0,0,0)
         self.context.set_line_width(45)
         self.context.move_to(start,pos_exon)
         self.context.line_to(end,pos_exon)
         self.context.stroke()
-        self.surface.write_to_png (f'{prefix}.png')
+        self.surface.write_to_png (f'{file_name}.png')
 
 
 # one line fasta file
@@ -163,7 +183,7 @@ with open(input_fasta, "r") as fh, open("single_line.fasta", "w") as out:
 
 # initializing empty dictionary
 data = {}
-# loop through single_line.fasta and fill in key:value for data: data = {gene:sequence}
+# loop through single_line.fasta and fill in key:value for data: data = {'gene':'sequence'}
 with open("single_line.fasta","r") as fh: 
     while True: 
         header = fh.readline().strip()
@@ -211,8 +231,8 @@ colors = {} # initializing an empty dictionary, color, to store the colors of ea
 figure = Draw()
 search = Locate()
 
-search.find_intron(data,prefix)
-search.find_exon(data,prefix)
-search.find_motif(data,regex_motifs,prefix)
-search.gene_name(data,prefix)
-figure.legend(colors,prefix)
+search.find_intron(data,file_name)
+search.find_exon(data,file_name)
+search.find_motif(data,regex_motifs,file_name)
+search.gene_name(data,file_name)
+figure.legend(colors,file_name)
