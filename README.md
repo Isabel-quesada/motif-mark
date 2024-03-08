@@ -1,7 +1,7 @@
 # motif-mark
 
 ### Command To Run:
-./motif-mark-oop.py -f `fasta`  -m `motifs` 
+$ ./motif-mark-oop.py -f `fasta`  -m `motifs` 
 
 ### Versions: 
 * cairo: 1.18.0
