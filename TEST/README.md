@@ -1,14 +1,14 @@
 # Test files
 
 ### Conda Environment:
-conda create -n my_pycairo pycairo <br>
-conda activate my_pycairo
+$ conda create -n my_pycairo pycairo <br>
+$ conda activate my_pycairo
 
 ### Versions: 
-* Pycairo: #################
-* Python: ##################
+* cairo: 1.18.0
+* pycairo: 1.26.0 
+* python: 3.12.2
 
 ### Directions: 
-Use the input files to run ```motif-mark-oop.py```. The expected files are in output.
-* The input files must be in the same directory as ```motif-mark-oop.py``` for the output png to have the proper prefex (same prefix as the input fasta file).
-* Motif colors are randomly generated each time ```motif-mark-oop.py``` is ran.
+Use the `input` files to run ```motif-mark-oop.py```. The files generated are in `output`.
+* Motif colors are randomly generated each time ```motif-mark-oop.py``` is ran. This was done to account for an unknown number of input motifs.
