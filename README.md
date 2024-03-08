@@ -1,8 +1,9 @@
 # motif-mark
 
-### Version: 
-* Pycairo: ################
-* Python: ###############
+### Versions: 
+* cairo: 1.18.0
+* pycairo: 1.26.0 
+* python: 3.12.2
   
 ### Description:
 Python script using object-oriented code to visualize motifs on sequences
